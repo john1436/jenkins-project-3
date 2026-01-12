@@ -1,0 +1,35 @@
+pipeline {
+  agent any
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+          git url: "https://${GITHUB_TOKEN}@github.com/john1436/jenkins-project-3.git", branch: 'main'
+        }
+      }
+    }
+
+    stage('Build Image') {
+      steps {
+        sh 'docker build -t john1436gilbert/secure-app:latest .'
+      }
+    }
+
+    stage('Login DockerHub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+        }
+      }
+    }
+
+    stage('Push Image') {
+      steps {
+        sh 'docker push john1436gilbert/secure-app:latest'
+      }
+    }
+  }
+}
+
